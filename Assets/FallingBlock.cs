@@ -6,6 +6,7 @@ public class FallingBlock : MonoBehaviour {
 	public float speed = 1f;
 	public Sprite right,left,up,down;
 	public VectorManagement.Dir dir;
+	bool fel = false;
 	// Use this for initialization
 	void Start () {
 		parPos = transform.parent.localPosition;
@@ -21,11 +22,14 @@ public class FallingBlock : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		currPos = this.transform.localPosition;
-		if (currPos.y > 0) {
-			transform.position -= new Vector3 (0, speed);
-		} else if (currPos.y < 0) {
-			transform.position = new Vector3 (parPos.x, parPos.y);
+		if (fel == false) {
+			currPos = this.transform.localPosition;
+			if (currPos.y > 0) {
+				transform.position -= new Vector3 (0, speed);
+			} else if (currPos.y <= 0) {
+				transform.position = new Vector3 (parPos.x, parPos.y);
+				fel = true;
+			}
 		}
 	}
 }

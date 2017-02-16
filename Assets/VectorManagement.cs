@@ -21,6 +21,7 @@ public class VectorManagement : MonoBehaviour {
 	public GameObject menuPanel;
 	public GameObject ComboImage;
 	public int rowNr = 0;
+	bool lost = false;
 	public GameObject comboText;
 	int combo = 0;
 	public int countCleared;
@@ -30,7 +31,7 @@ public class VectorManagement : MonoBehaviour {
 		timer = slider.GetComponent<Timer> ();
 		AddRow ();
 		AddRow ();
-		Camera.main.transform.position = new Vector3 (stackWidth / 2, rowNr, Camera.main.transform.position.z);
+		Camera.main.transform.position = new Vector3 (stackWidth / 2 - 0.5f, rowNr + 10, Camera.main.transform.position.z);
 
 		if (isAutoOn) {
 			GameObject.FindWithTag ("Timer").transform.localScale = new Vector3 (0, 0, 0);
@@ -77,8 +78,10 @@ public class VectorManagement : MonoBehaviour {
 			AddRow ();
 		}
 
-		if (timer.timer <= 0)
+		if (timer.timer <= 0 && lost == false) {
+			lost = true;
 			Lose ();
+		}
 	}
 	//clear a single node
 	void ClearNode() {
@@ -120,6 +123,7 @@ public class VectorManagement : MonoBehaviour {
 
 		node_go.GetComponent<NodeController> ().dir = dir;
 		node_go.GetComponent<NodeController> ().row = rowNr;
+		node_go.transform.SetParent (this.transform);
 		GameObject arrow = null;
 		foreach (Transform child in node_go.transform) {
 			//VEEEERY WIP, MAY CAUSE ISSUES!!!!
@@ -160,6 +164,12 @@ public class VectorManagement : MonoBehaviour {
 	void Lose()
 	{
 		WindowDownCoroutine (gameOverPanel, 100f, 0.1f, gameOverPanel.transform.parent.gameObject);
+		GameObject.FindWithTag ("Chara").SetActive (false);
+		foreach(Transform child in transform) {
+			child.GetComponent<Rigidbody2D> ().simulated = true;
+			float forcex = child.transform.localPosition.x > 1 ? 1 : -1;
+			child.GetComponent<Rigidbody2D> ().AddForce (new Vector2 (Random.Range(forcex, forcex*100), Random.Range (1, 2)));
+		}
 	}
 
 	FollowBlocks.Movement determineMove() {
@@ -177,7 +187,7 @@ public class VectorManagement : MonoBehaviour {
 	IEnumerator WindowDownCoroutine(GameObject window, float scrollSpeed, float cooldown, GameObject canvas) {
 		Rect rect = window.GetComponent<RectTransform> ().rect;
 		while (rect.top != canvas.GetComponent<RectTransform>().rect.height/2) {
-			window.transform.position -= new Vector3 (0f, scrollSpeed,0f);
+			window.GetComponent<RectTransform>().anchoredPosition -= new Vector2 (0f, scrollSpeed);
 			yield return new WaitForSeconds(cooldown);
 		}
 
