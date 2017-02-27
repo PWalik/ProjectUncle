@@ -6,6 +6,7 @@ public class FollowBlocks : MonoBehaviour {
 	//determine 2 things - what block to follow, and is it starting block (jump up), or move to the right/left
 	public Movement move = Movement.none;
 	Vector3 movem, left;
+	bool start = false;
 	// Update is called once per frame
 	void Update () {
 		Camera.main.transform.position = new Vector3(Camera.main.transform.position.x, transform.position.y, Camera.main.transform.position.z);
@@ -20,6 +21,8 @@ public class FollowBlocks : MonoBehaviour {
 					break;
 				case Movement.up:
 					movem += new Vector3 (0, 1, 0);
+
+
 					break;
 				}
 			move = Movement.none;

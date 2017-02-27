@@ -4,20 +4,12 @@ using System.Collections;
 public class FallingBlock : MonoBehaviour {
 	Vector3 currPos, parPos;
 	public float speed = 1f;
-	public Sprite right,left,up,down;
 	public VectorManagement.Dir dir;
 	bool fel = false;
 	// Use this for initialization
 	void Start () {
 		parPos = transform.parent.localPosition;
-		if (dir == VectorManagement.Dir.left)
-			this.transform.GetComponent<SpriteRenderer> ().sprite = left;
-		else if (dir == VectorManagement.Dir.left)
-			this.transform.GetComponent<SpriteRenderer> ().sprite = right;
-		else if (dir == VectorManagement.Dir.up)
-			this.transform.GetComponent<SpriteRenderer> ().sprite = up;
-		else
-			this.transform.GetComponent<SpriteRenderer> ().sprite = down;
+		this.GetComponent<SpriteRenderer> ().color = new Color(Random.Range (0, 255)/255f, Random.Range (0,255)/255f, Random.Range (0, 255)/255f, 255/255f);
 	}
 	
 	// Update is called once per frame

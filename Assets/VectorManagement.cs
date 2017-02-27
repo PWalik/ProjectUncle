@@ -9,12 +9,15 @@ public class VectorManagement : MonoBehaviour {
 	public int stackWidth = 10;
 	public bool isAutoOn = false;
 	Timer timer;
-	public GameObject gameOverPanel;
 	public GameObject slider;
 	public GameObject Best;
-	public GameObject sky;
+	public GameObject text;
+	public GameObject control;
+	public GameObject blink;
+	public GameObject orbs;
 	public bool mixed = false;
 	public Dir currMove = Dir.none;
+	public GameObject orb;
 	public List<Dir> nodes;
 	public List<GameObject> nodes_go;
 	public GameObject genericNode;
@@ -22,10 +25,18 @@ public class VectorManagement : MonoBehaviour {
 	public GameObject ComboImage;
 	public int rowNr = 0;
 	bool lost = false;
+
+	public bool Lost {
+		get {
+			return lost;
+		}
+	}
+
 	public GameObject comboText;
 	int combo = 0;
 	public int countCleared;
 	void Start() {
+		GameObject.FindWithTag ("Chara").GetComponent<FollowBlocks> ().move = determineMove ();
 		comboText.GetComponent<Text> ().text = "0";
 		combo = 0;
 		timer = slider.GetComponent<Timer> ();
@@ -52,6 +63,7 @@ public class VectorManagement : MonoBehaviour {
 				ClearNode ();
 				countCleared++;
 				combo++;
+				spawnOrb ();
 				if(!isAutoOn)
 				ComboImage.GetComponent<ComboImg> ().isPulse = true;
 				comboText.GetComponent<Text> ().text = "" + combo;
@@ -62,10 +74,7 @@ public class VectorManagement : MonoBehaviour {
 				timer.reset = true;
 				//or wrong
 			} else {
-				//half the time lost,can quickly correct yourself EDIT: you just lose, testing it out (not too much timberman ripoff?)
-				//timer.timer -= timer.timeLeft / 2;
 				timer.timer=0;
-				combo = 0;
 				comboText.GetComponent<Text> ().text = "" + combo;
 			}
 
@@ -163,35 +172,59 @@ public class VectorManagement : MonoBehaviour {
 
 	void Lose()
 	{
-		WindowDownCoroutine (gameOverPanel, 100f, 0.1f, gameOverPanel.transform.parent.gameObject);
+		//control.SetActive (false);
 		GameObject.FindWithTag ("Chara").SetActive (false);
+		slider.SetActive (false);
 		foreach(Transform child in transform) {
 			child.GetComponent<Rigidbody2D> ().simulated = true;
 			float forcex = child.transform.localPosition.x > 1 ? 1 : -1;
 			child.GetComponent<Rigidbody2D> ().AddForce (new Vector2 (Random.Range(forcex, forcex*100), Random.Range (1, 2)));
 		}
+		foreach (Transform childs in orbs.transform) {
+			childs.GetComponent<Orb> ().liveTime =0;
+		}
+		spawnEndScreen ();
 	}
 
 	FollowBlocks.Movement determineMove() {
 		int rowClearing = rowNr -2;
-			if (countCleared == 1)
+		if (countCleared == 0 || countCleared == stackWidth)
 				return FollowBlocks.Movement.up;
-			else if (mixed == false || rowClearing == 0 || rowClearing % 2 == 0)
+			else if (mixed == false || rowClearing % 2 == 0)
 				return FollowBlocks.Movement.right;
 			else
 				return FollowBlocks.Movement.left;
 		}
 
-
-
-	IEnumerator WindowDownCoroutine(GameObject window, float scrollSpeed, float cooldown, GameObject canvas) {
-		Rect rect = window.GetComponent<RectTransform> ().rect;
-		while (rect.top != canvas.GetComponent<RectTransform>().rect.height/2) {
-			window.GetComponent<RectTransform>().anchoredPosition -= new Vector2 (0f, scrollSpeed);
-			yield return new WaitForSeconds(cooldown);
-		}
+	void spawnOrb() {
+		Vector3 test;
+		int rand;
+		int x = ((rand = Random.Range (0, 3))== 0 ? -1 : rand == 1 ? 0 : 1);
+		int y = x== 1? ((rand =Random.Range (0, 2)) == 0 ? -1 : 1): ((rand = Random.Range (0, 3)) == 0 ? -1 : rand == 1 ? 0 : 1);
+		Vector3 orbPos = Camera.main.ViewportToWorldPoint(test = new Vector3(x==-1? -0.1f: (x==0? 0.5f:1.1f),y==-1? -0.1f: (y==0? 0.5f:1.1f), 0));
+		GameObject orbz= Instantiate (orb, new Vector3(orbPos.x, orbPos.y, 0), Quaternion.identity);
+		orbz.transform.SetParent (orbs.transform);
+		orb.GetComponent<SpriteRenderer> ().color = new Color (Random.Range (0, 255) / 255f, Random.Range (0, 255) / 255f, Random.Range (0, 255) / 255f, 1/ 255f);
+		orbz.GetComponent<Orb> ().orbDir = -new Vector3 (x, y);
 
 	}
-
+	//FIX THIS SHIT
+	void spawnEndScreen() {
+		int phase = 0;
+		GameObject texts = Instantiate (text, Camera.main.WorldToViewportPoint (new Vector3 (0, 0, 0)), Quaternion.identity);
+		Color c = texts.GetComponent<SpriteRenderer> ().color;
+		texts.GetComponent<SpriteRenderer> ().color = new Color (c.r, c.g, c.b, 1 / 255);
+		if (phase == 0){
+			texts.GetComponent<SpriteRenderer> ().color += new Color (0, 0, 0, 50 / 255);
+			if (texts.GetComponent<SpriteRenderer> ().color.a >= 1)
+				phase++;
+				}
+		if (phase == 1) {
+			GameObject blinkz = Instantiate (blink, Camera.main.WorldToViewportPoint (new Vector3 (0, 0, 0)), Quaternion.identity);
+			blinkz.GetComponent<SpriteRenderer> ().color += new Color (0, 0, 0, 50 / 255);
+			if (blinkz.GetComponent<SpriteRenderer> ().color.a >= 1)
+				phase++;
+		}
+	}
 
 }
