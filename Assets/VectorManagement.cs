@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 	
 public class VectorManagement : MonoBehaviour {
 	//this script is responsible for managing the vectors - which nodes are going to appear next on the game board.
@@ -9,11 +10,19 @@ public class VectorManagement : MonoBehaviour {
 	public int stackWidth = 10;
 	public bool isAutoOn = false;
 	Timer timer;
+	public bool start = false;
 	public GameObject slider;
+	public string[] textz;
 	public GameObject Best;
-	public GameObject text;
+	public bool reload = false;
+	public GameObject music, shatter;
+	public GameObject text,high;
 	public GameObject control;
+	public int textSpeed;
+	public GameObject clean;
+	public GameObject fadeIn;
 	public GameObject blink;
+	public float gameOverWait;
 	public GameObject orbs;
 	public bool mixed = false;
 	public Dir currMove = Dir.none;
@@ -21,7 +30,6 @@ public class VectorManagement : MonoBehaviour {
 	public List<Dir> nodes;
 	public List<GameObject> nodes_go;
 	public GameObject genericNode;
-	public GameObject menuPanel;
 	public GameObject ComboImage;
 	public int rowNr = 0;
 	bool lost = false;
@@ -39,6 +47,9 @@ public class VectorManagement : MonoBehaviour {
 		GameObject.FindWithTag ("Chara").GetComponent<FollowBlocks> ().move = determineMove ();
 		comboText.GetComponent<Text> ().text = "0";
 		combo = 0;
+		if (PlayerPrefs.GetInt ("a") <= 0)
+			PlayerPrefs.SetInt ("a", 0);
+		Best.GetComponent<Text> ().text = "" + PlayerPrefs.GetInt ("a");
 		timer = slider.GetComponent<Timer> ();
 		AddRow ();
 		AddRow ();
@@ -51,8 +62,8 @@ public class VectorManagement : MonoBehaviour {
 			ComboImage.transform.localScale = new Vector3 (0, 0, 0);
 		} else {
 			Best.transform.localScale = new Vector3 (0, 0, 0);
-			menuPanel.transform.localScale = new Vector3 (0, 0, 0);
 		}
+		StartCoroutine (FadeIn ());
 	}
 	void Update () {
 		//what happens if we get an input?
@@ -170,9 +181,16 @@ public class VectorManagement : MonoBehaviour {
 	}
 	
 
-	void Lose()
+	public void Lose()
 	{
-		//control.SetActive (false);
+		shatter.GetComponent<AudioSource> ().Play ();
+		Destroy (music);
+		if (combo >= PlayerPrefs.GetInt ("a")) {
+			PlayerPrefs.SetInt ("a", combo);
+			GameObject texts = Instantiate (high, new Vector3 (0, 80, 0), Quaternion.identity);
+			texts.transform.SetParent (GameObject.FindWithTag ("Canvas").transform,false);
+		}
+
 		GameObject.FindWithTag ("Chara").SetActive (false);
 		slider.SetActive (false);
 		foreach(Transform child in transform) {
@@ -181,9 +199,9 @@ public class VectorManagement : MonoBehaviour {
 			child.GetComponent<Rigidbody2D> ().AddForce (new Vector2 (Random.Range(forcex, forcex*100), Random.Range (1, 2)));
 		}
 		foreach (Transform childs in orbs.transform) {
-			childs.GetComponent<Orb> ().liveTime =0;
+			childs.GetComponent<Orb> ().liveTime = 0;
 		}
-		spawnEndScreen ();
+		StartCoroutine ("spawnEndScreen");
 	}
 
 	FollowBlocks.Movement determineMove() {
@@ -197,34 +215,76 @@ public class VectorManagement : MonoBehaviour {
 		}
 
 	void spawnOrb() {
-		Vector3 test;
 		int rand;
 		int x = ((rand = Random.Range (0, 3))== 0 ? -1 : rand == 1 ? 0 : 1);
 		int y = x== 1? ((rand =Random.Range (0, 2)) == 0 ? -1 : 1): ((rand = Random.Range (0, 3)) == 0 ? -1 : rand == 1 ? 0 : 1);
-		Vector3 orbPos = Camera.main.ViewportToWorldPoint(test = new Vector3(x==-1? -0.1f: (x==0? 0.5f:1.1f),y==-1? -0.1f: (y==0? 0.5f:1.1f), 0));
+		Vector3 orbPos = Camera.main.ViewportToWorldPoint(new Vector3(x==-1? -0.1f: (x==0? 0.5f:1.1f),y==-1? -0.1f: (y==0? 0.5f:1.1f), 0));
 		GameObject orbz= Instantiate (orb, new Vector3(orbPos.x, orbPos.y, 0), Quaternion.identity);
 		orbz.transform.SetParent (orbs.transform);
 		orb.GetComponent<SpriteRenderer> ().color = new Color (Random.Range (0, 255) / 255f, Random.Range (0, 255) / 255f, Random.Range (0, 255) / 255f, 1/ 255f);
 		orbz.GetComponent<Orb> ().orbDir = -new Vector3 (x, y);
 
 	}
-	//FIX THIS SHIT
-	void spawnEndScreen() {
-		int phase = 0;
-		GameObject texts = Instantiate (text, Camera.main.WorldToViewportPoint (new Vector3 (0, 0, 0)), Quaternion.identity);
-		Color c = texts.GetComponent<SpriteRenderer> ().color;
-		texts.GetComponent<SpriteRenderer> ().color = new Color (c.r, c.g, c.b, 1 / 255);
-		if (phase == 0){
-			texts.GetComponent<SpriteRenderer> ().color += new Color (0, 0, 0, 50 / 255);
-			if (texts.GetComponent<SpriteRenderer> ().color.a >= 1)
-				phase++;
-				}
-		if (phase == 1) {
-			GameObject blinkz = Instantiate (blink, Camera.main.WorldToViewportPoint (new Vector3 (0, 0, 0)), Quaternion.identity);
-			blinkz.GetComponent<SpriteRenderer> ().color += new Color (0, 0, 0, 50 / 255);
-			if (blinkz.GetComponent<SpriteRenderer> ().color.a >= 1)
-				phase++;
+	//Couritine for spawning the test + light ball
+	IEnumerator spawnEndScreen() {
+		//Creating the text "Don't Give Up!"
+		float timez = 0f;
+		while (timez <= gameOverWait) {
+			timez += Time.deltaTime;
+			yield return null;
 		}
+
+		GameObject texts = Instantiate (text, new Vector3 (0, 90, 0), Quaternion.identity);
+		texts.GetComponent<Text> ().text = textz [Random.Range (0, textz.Length)];
+		Color c = texts.GetComponent<Text> ().color;
+		texts.transform.SetParent (GameObject.FindWithTag ("Canvas").transform,false);
+		texts.GetComponent<Text> ().color = new Color (c.r, c.g, c.b, 0f);
+		//Slowly showing it on the screen
+		for (int i = 0; i < 510; i += textSpeed) {
+			c = new Color (c.r, c.g, c.b, c.a + textSpeed / 255f/2);
+			texts.GetComponent<Text> ().color = c;
+			yield return null;
+		}
+		//creating the blinking light (all of the functions on the object itself)
+		reload = true;
+			GameObject blinkz = Instantiate (blink, Camera.main.ViewportToWorldPoint (new Vector3 (0.5f, 0.5f, 0)), Quaternion.identity);
+			blinkz.transform.position = new Vector3 (blinkz.transform.position.x, blinkz.transform.position.y, 0);
 	}
 
+	public IEnumerator ReloadLevel(int lvl) {
+		StartCoroutine (SpawnBall (true,lvl));
+		float time = 0f;
+		while (time < 0.5) {
+			time += Time.deltaTime;
+			yield return null;
+		}
+		StartCoroutine (SpawnBall (false,lvl));
+		time = 0f;
+		while (time < 0.5) {
+			time += Time.deltaTime;
+			yield return null;
+		}
+		SceneManager.LoadScene ("gaaame");
+	}
+	IEnumerator SpawnBall(bool white,int lvl) {
+		GameObject blinkz = Instantiate (clean, Camera.main.ViewportToWorldPoint (new Vector3 (0.5f, 0.5f, 0)), Quaternion.identity);
+		if (!white)
+			blinkz.GetComponent<SpriteRenderer> ().color = Color.black;
+		blinkz.transform.position += new Vector3 (0,0, 5);
+		while(blinkz.transform.localScale.x < 25) {
+			blinkz.transform.localScale+= new Vector3(0.2f,0.2f,0.2f);
+			yield return null;
+		}
+
+	}
+	IEnumerator FadeIn() {
+		Color c = fadeIn.GetComponent<SpriteRenderer> ().color;
+		while (c.a > 0) {
+			c -= new Color (0, 0, 0, 5 / 255f);
+			fadeIn.GetComponent<SpriteRenderer> ().color = c;
+			yield return null;
+		}
+		start = true;
+		Destroy (fadeIn);
+	}
 }

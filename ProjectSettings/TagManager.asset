@@ -10,6 +10,7 @@ TagManager:
   - Combo
   - Canvas
   - Menu
+  - Info
   layers:
   - Default
   - TransparentFX
@@ -19,7 +20,7 @@ TagManager:
   - UI
   - 
   - 
-  - 
+  - Foreground
   - 
   - 
   - 
@@ -61,4 +62,7 @@ TagManager:
     locked: 0
   - name: Chara
     uniqueID: 3826230715
+    locked: 0
+  - name: ForeGround
+    uniqueID: 3669488327
     locked: 0

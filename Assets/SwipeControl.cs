@@ -18,65 +18,62 @@ public class SwipeControl : MonoBehaviour {
 	}
 	void  Update()
 	{
-		if (Input.touchCount > 0)
-		{
-			Touch touch = Input.touches[0];
+		if (Input.touchCount > 0 && manage.start == true) {
+				Touch touch = Input.touches [0];
 
-			switch (touch.phase)
-			{
-			case TouchPhase.Began:
-				lastSwipe = VectorManagement.Dir.none;
-				lastSwipeTime = 0;
-				couldBeSwipe = true;
-				startPos = touch.position;
-				startTime = Time.time;
-				break;
+				switch (touch.phase) {
+				case TouchPhase.Began:
+				if (manage.reload == true)
+					StartCoroutine (manage.ReloadLevel (1));
+					else {
+					lastSwipe = VectorManagement.Dir.none;
+					lastSwipeTime = 0;
+					couldBeSwipe = true;
+					startPos = touch.position;
+					startTime = Time.time;
+					}
+					break;
 
 			case TouchPhase.Moved:
-				if (Mathf.Abs(touch.position.x - startPos.x) > comfortZone || Mathf.Abs(touch.position.y - startPos.y) > comfortZone)
-				{
-					Debug.Log("Not a swipe. Swipe strayed " + (int)Mathf.Abs(touch.position.x - startPos.x) +
-						"px which is " + (int)(Mathf.Abs(touch.position.x - startPos.x) - comfortZone) +
-						"px outside the comfort zone.");
+				if (Mathf.Abs (touch.position.x - startPos.x) > comfortZone || Mathf.Abs (touch.position.y - startPos.y) > comfortZone) {
 					couldBeSwipe = false;
 				}
-				break;
-			case TouchPhase.Ended:
-				if (couldBeSwipe) {
-					float swipeTime = Time.time - startTime;
-					float swipeDistX = (new Vector3 (0, touch.position.x, 0) - new Vector3 (0, startPos.x, 0)).magnitude;
-					float swipeDistY = (new Vector3 (0, touch.position.y, 0) - new Vector3 (0, startPos.y, 0)).magnitude;
-					if (swipeDistX > swipeDistY) {
+					break;
+				case TouchPhase.Ended:
+					if (couldBeSwipe) {
+						float swipeTime = Time.time - startTime;
+						float swipeDistX = (new Vector3 (0, touch.position.x, 0) - new Vector3 (0, startPos.x, 0)).magnitude;
+						float swipeDistY = (new Vector3 (0, touch.position.y, 0) - new Vector3 (0, startPos.y, 0)).magnitude;
+					if (swipeDistX < swipeDistY) {
 						//Swipe Down or Up
-						if (swipeTime < maxSwipeTime && swipeDistX > minSwipeDist) {
+						if (swipeTime < maxSwipeTime && swipeDistY > minSwipeDist) {
 							// It's a swiiiiiiiiiiiipe!
-							float swipeValueX = Mathf.Sign (touch.position.y - startPos.y);
-							float swipeValueY = Mathf.Sign (touch.position.x - startPos.x);
+							float swipeValueY = Mathf.Sign (touch.position.y - startPos.y);
 							// If the swipe direction is positive, it was an upward swipe.
 							// If the swipe direction is negative, it was a downward swipe.
-							if (swipeValueX > 0)
+							if (swipeValueY > 0)
 								manage.currMove = VectorManagement.Dir.up;
-							else if (swipeValueX < 0)
+							else if (swipeValueY < 0)
 								manage.currMove = VectorManagement.Dir.down;
-							
+						}
 						} else {
-							//Swipe Right or Left
-							if (swipeTime < maxSwipeTime && swipeDistY > minSwipeDist) {
-								// It's a swiiiiiiiiiiiipe!
-								float swipeValueX = Mathf.Sign (touch.position.y - startPos.y);
-								float swipeValueY = Mathf.Sign (touch.position.x - startPos.x);
-								// If the swipe direction is positive, it was an upward swipe.
-								// If the swipe direction is negative, it was a downward swipe.
-								if (swipeValueX > 0)
-									manage.currMove = VectorManagement.Dir.left;
-								else if (swipeValueX < 0)
-									manage.currMove = VectorManagement.Dir.right;
-							}
+						//Swipe Right or Left
+						if (swipeTime < maxSwipeTime && swipeDistX > minSwipeDist) {
+							// It's a swiiiiiiiiiiiipe!
+							Debug.Log ("hi");
+							float swipeValueX = Mathf.Sign (touch.position.x - startPos.x);
+							// If the swipe direction is positive, it was an upward swipe.
+							// If the swipe direction is negative, it was a downward swipe.
+							if (swipeValueX < 0)
+								manage.currMove = VectorManagement.Dir.left;
+							else if (swipeValueX > 0)
+								manage.currMove = VectorManagement.Dir.right;
 						}
 					}
-				}
+							}
+
 					break;
-					}
 				}
+			}
 		}
 	}
